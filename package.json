@@ -1,0 +1,38 @@
+{
+  "name": "tsplayer",
+  "version": "1.0.0",
+  "description": "练习项目，防小米官网弹出式播放器，使用ts封装播放器组件",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config webpack.config.pro.js",
+    "start": "webpack-dev-server --config webpack.config.dev.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruizer/tsplayer.git"
+  },
+  "keywords": [
+    "typescript"
+  ],
+  "author": "ruizer",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ruizer/tsplayer/issues"
+  },
+  "homepage": "https://github.com/ruizer/tsplayer#readme",
+  "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "css-loader": "^4.3.0",
+    "file-loader": "^6.1.0",
+    "html-webpack-plugin": "^4.5.0",
+    "mini-css-extract-plugin": "^0.11.2",
+    "style-loader": "^1.2.1",
+    "ts-loader": "^8.0.4",
+    "typescript": "^4.0.3",
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "dependencies": {}
+}
