@@ -31,6 +31,7 @@ class Video implements Icomponent {
     this.tempContainer.style.height = this.settings.height;
     this.tempContainer.innerHTML = `
       <video class="${styles['video-content']}" src="${this.settings.url}"></video>
+      <i class="iconfont iconicon_jiazai ${styles['video-loading']}"></i>
       <div class="${styles['video-controls']}">
         <div class="${styles['video-progress']}">
           <div class="${styles['video-progress-now']}"></div>
@@ -87,6 +88,7 @@ class Video implements Icomponent {
     );
     let timer;
     let canplay = false;
+    const vm = this;
 
     videoContent.volume = 0.5;
     if (this.settings.autoplay) {
@@ -101,10 +103,16 @@ class Video implements Icomponent {
       videoControls.style.bottom = '-50px';
     });
 
+    // 视频开始加载事件
+    videoContent.addEventListener('loadstart', () => {
+      this.loadingFinish(false);
+    });
+
     // 视频是否加载完毕
     videoContent.addEventListener('canplay', () => {
       videoTimes[1].innerHTML = formatTime(videoContent.duration);
       canplay = true;
+      this.loadingFinish(true);
     });
     // 视频播放事件
     videoContent.addEventListener('play', () => {
@@ -148,6 +156,7 @@ class Video implements Icomponent {
       };
       document.onmouseup = () => {
         document.onmousemove = document.onmouseup = null;
+        vm.loadingFinish(false);
       };
       ev.preventDefault();
     });
@@ -197,6 +206,13 @@ class Video implements Icomponent {
         return '' + num;
       }
     }
+  }
+  // 是否加载完成，图标是否隐藏
+  loadingFinish(bool: Boolean) {
+    let videoLoading = this.tempContainer.querySelector(
+      `.${styles['video-loading']}`,
+    );
+    videoLoading.style.display = bool ? 'none' : 'inline-block';
   }
 }
 
