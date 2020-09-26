@@ -13,8 +13,10 @@ class Video implements Icomponent {
   videoControls: HTMLElement;
   videoPlay: HTMLElement;
   videoFull: HTMLElement;
-  videoProgress: NodeListOf<HTMLElement>;
-  videoVolProgress: NodeListOf<HTMLElement>;
+  videoProgress: HTMLElement;
+  videoProgressTools: NodeListOf<HTMLElement>;
+  videoVolProgress: HTMLElement;
+  videoVolProgressTools: NodeListOf<HTMLElement>;
   videoTimes: NodeListOf<HTMLElement>;
   timer: number;
   canplay: Boolean = false;
@@ -86,10 +88,16 @@ class Video implements Icomponent {
     this.videoFull = this.tempContainer.querySelector(
       `.${styles['video-full']} i`,
     );
-    this.videoProgress = this.tempContainer.querySelectorAll(
+    this.videoProgress = this.tempContainer.querySelector(
+      `.${styles['video-progress']}`,
+    );
+    this.videoProgressTools = this.tempContainer.querySelectorAll(
       `.${styles['video-progress']} div`,
     );
-    this.videoVolProgress = this.tempContainer.querySelectorAll(
+    this.videoVolProgress = this.tempContainer.querySelector(
+      `.${styles['video-volprogress']}`,
+    );
+    this.videoVolProgressTools = this.tempContainer.querySelectorAll(
       `.${styles['video-volprogress']} div`,
     );
     this.videoTimes = this.tempContainer.querySelectorAll(
@@ -146,27 +154,11 @@ class Video implements Icomponent {
       this.videoContent.requestFullscreen();
     });
 
-    // 拖拽视频进度图标
-    this.dragProgress(
-      this.videoProgress[2],
-      (scale: number) => {
-        this.videoProgress[0].style.width = scale * 100 + '%';
-        this.videoProgress[1].style.width = scale * 100 + '%';
-        this.videoContent.currentTime = scale * this.videoContent.duration;
-        this.videoTimes[0].innerHTML = formatTime(
-          this.videoContent.currentTime,
-        );
-      },
-      () => {
-        this.loadingFinish(false);
-      },
-    );
+    // 点击进度条或拖拽进度条图标
+    this.clickDragProgress();
 
-    // 拖拽音量进度图标
-    this.dragProgress(this.videoVolProgress[1], (scale: number) => {
-      this.videoVolProgress[0].style.width = scale * 100 + '%';
-      this.videoContent.volume = scale;
-    });
+    // 点击音量进度条或拖拽音量进度图标
+    this.clickDragVolProgress();
   }
   // 是否加载完成，图标是否隐藏
   loadingFinish(bool: Boolean) {
@@ -182,32 +174,82 @@ class Video implements Icomponent {
     let scaleSuc =
       this.videoContent.buffered.end(0) / this.videoContent.duration;
     this.videoTimes[0].innerHTML = formatTime(this.videoContent.currentTime);
-    this.videoProgress[0].style.width = scale * 100 + '%';
-    this.videoProgress[1].style.width = scaleSuc * 100 + '%';
-    this.videoProgress[2].style.left = scale * 100 + '%';
+    this.videoProgressTools[0].style.width = scale * 100 + '%';
+    this.videoProgressTools[1].style.width = scaleSuc * 100 + '%';
+    this.videoProgressTools[2].style.left = scale * 100 + '%';
   }
-  // 拖拽条
+  // 点击进度条或拖拽进度条图标
+  clickDragProgress() {
+    this.clickProgress(this.videoProgress, (scale: number) => {
+      callback(scale);
+      this.loadingFinish(false);
+    });
+    this.dragProgress(
+      this.videoProgressTools[2],
+      (scale: number) => {
+        callback(scale);
+      },
+      () => {
+        this.loadingFinish(false);
+      },
+    );
+    const vm = this;
+    function callback(scale: number) {
+      vm.videoProgressTools[0].style.width = scale * 100 + '%';
+      vm.videoProgressTools[1].style.width = scale * 100 + '%';
+      vm.videoProgressTools[2].style.left = scale * 100 + '%';
+      vm.videoContent.currentTime = scale * vm.videoContent.duration;
+      vm.videoTimes[0].innerHTML = formatTime(vm.videoContent.currentTime);
+    }
+  }
+  // 点击音量进度条或拖拽音量进度条图标
+  clickDragVolProgress() {
+    this.clickProgress(this.videoVolProgress, (scale: number) => {
+      callback(scale);
+    });
+    this.dragProgress(this.videoVolProgressTools[1], (scale: number) => {
+      callback(scale);
+    });
+    const vm = this;
+    function callback(scale: number) {
+      vm.videoVolProgressTools[0].style.width = scale * 100 + '%';
+      vm.videoVolProgressTools[1].style.left = scale * 100 + '%';
+      vm.videoContent.volume = scale;
+    }
+  }
+  // 拖拽进度条
   dragProgress(
     elem: HTMLElement,
     callback: (value: number) => void,
-    mouseupback?,
+    mouseupback?: () => void,
   ) {
     elem.addEventListener('mousedown', (ev: MouseEvent) => {
       if (!this.canplay) return;
       let downX = ev.pageX;
       let downL = elem.offsetLeft;
-      document.onmousemove = (ev: MouseEvent) => {
+      document.onmousemove = (evd: MouseEvent) => {
         let scale =
-          (ev.pageX - downX + downL + 8) / elem.parentElement.offsetWidth;
+          (evd.pageX - downX + downL + 8) / elem.parentElement.offsetWidth;
         scale < 0 && (scale = 0);
         scale > 1 && (scale = 1);
-        elem.style.left = scale * 100 + '%';
         callback(scale);
       };
       document.onmouseup = () => {
         document.onmousemove = document.onmouseup = null;
-        mouseupback();
+        mouseupback && mouseupback();
       };
+      ev.preventDefault();
+    });
+  }
+  // 点击进度条
+  clickProgress(elem: HTMLElement, callback: (value: number) => void) {
+    elem.addEventListener('click', (ev: MouseEvent) => {
+      if (!this.canplay) return;
+      let scale =
+        (ev.pageX - elem.getBoundingClientRect().left) / elem.offsetWidth;
+      scale < 0 && (scale = 0);
+      scale > 1 && (scale = 1);
+      callback(scale);
       ev.preventDefault();
     });
   }
