@@ -1,4 +1,4 @@
-import './iconfont.css';
+import './iconfont/iconfont.css';
 import './main.css';
 
 import popup from './components/popup/popup';
