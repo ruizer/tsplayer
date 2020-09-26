@@ -18,6 +18,7 @@ class Video implements Icomponent {
   videoVolProgress: HTMLElement;
   videoVolProgressTools: NodeListOf<HTMLElement>;
   videoTimes: NodeListOf<HTMLElement>;
+  notification: HTMLElement;
   timer: number;
   canplay: Boolean = false;
   constructor(private settings: IVideo) {
@@ -42,7 +43,7 @@ class Video implements Icomponent {
     this.tempContainer.style.height = this.settings.height;
     this.tempContainer.innerHTML = `
       <video class="${styles['video-content']}" src="${this.settings.url}"></video>
-      <i class="iconfont iconicon_jiazai ${styles['video-loading']}"></i>
+      <i class="iconfont iconxingzhuang ${styles['video-loading']}"></i>
       <div class="${styles['video-controls']}">
         <div class="${styles['video-progress']}">
           <div class="${styles['video-progress-now']}"></div>
@@ -59,7 +60,7 @@ class Video implements Icomponent {
           <i class="iconfont iconquanpingzuidahua"></i>
         </div>
         <div class="${styles['video-volume']}">
-          <i class="iconfont iconyinliang"></i>
+          <i class="iconfont iconnotificationfill"></i>
           <div class="${styles['video-volprogress']}">
             <div class="${styles['video-volprogress-now']}"></div>
             <div class="${styles['video-volprogress-bar']}"></div>
@@ -102,6 +103,9 @@ class Video implements Icomponent {
     );
     this.videoTimes = this.tempContainer.querySelectorAll(
       `.${styles['video-time']} span`,
+    );
+    this.notification = this.tempContainer.querySelector(
+      `.${styles['video-volume']} i`,
     );
     this.canplay = false;
 
@@ -215,6 +219,7 @@ class Video implements Icomponent {
       vm.videoVolProgressTools[0].style.width = scale * 100 + '%';
       vm.videoVolProgressTools[1].style.left = scale * 100 + '%';
       vm.videoContent.volume = scale;
+      vm.notificationLow(scale <= 0);
     }
   }
   // 拖拽进度条
@@ -260,6 +265,12 @@ class Video implements Icomponent {
     } else {
       this.videoContent.pause();
     }
+  }
+  // 音量图标
+  notificationLow(bool) {
+    this.notification.className = bool
+      ? 'iconfont iconnotificationforbidfill'
+      : 'iconfont iconnotificationfill';
   }
 }
 
