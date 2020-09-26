@@ -16,7 +16,7 @@ class Video implements Icomponent {
   videoProgress: NodeListOf<HTMLElement>;
   videoVolProgress: NodeListOf<HTMLElement>;
   videoTimes: NodeListOf<HTMLElement>;
-  timer: Number;
+  timer: number;
   canplay: Boolean = false;
   constructor(private settings: IVideo) {
     this.settings = Object.assign(
@@ -96,11 +96,10 @@ class Video implements Icomponent {
       `.${styles['video-time']} span`,
     );
     this.canplay = false;
-    const vm = this;
 
     this.videoContent.volume = 0.5;
     if (this.settings.autoplay) {
-      this.timer = window.setInterval(playing, 1000);
+      this.timer = window.setInterval(this.playing, 1000);
       this.videoContent.play();
     }
 
@@ -125,7 +124,7 @@ class Video implements Icomponent {
     // 视频播放事件
     this.videoContent.addEventListener('play', () => {
       this.videoPlay.className = 'iconfont iconzantingtingzhi';
-      this.timer = window.setInterval(playing, 1000);
+      this.timer = window.setInterval(this.playing, 1000);
     });
     // 视频暂停事件
     this.videoContent.addEventListener('pause', () => {
@@ -133,77 +132,41 @@ class Video implements Icomponent {
       window.clearInterval(Number(this.timer));
     });
 
+    //点击屏幕播放暂停
+    this.videoContent.addEventListener('click', () => {
+      this.playAndPause();
+    });
+
     //播放暂停
     this.videoPlay.addEventListener('click', () => {
-      if (this.videoContent.paused) {
-        this.videoContent.play();
-      } else {
-        this.videoContent.pause();
-      }
+      this.playAndPause();
     });
     // 全屏
     this.videoFull.addEventListener('click', () => {
       this.videoContent.requestFullscreen();
     });
 
-    // 拖拽进度图标
-    this.videoProgress[2].addEventListener('mousedown', function (
-      ev: MouseEvent,
-    ) {
-      if (!vm.canplay) return;
-      let downX = ev.pageX;
-      let downL = this.offsetLeft;
-      document.onmousemove = (ev: MouseEvent) => {
-        let scale =
-          (ev.pageX - downX + downL + 8) / this.parentElement.offsetWidth;
-        scale < 0 && (scale = 0);
-        scale > 1 && (scale = 1);
-        vm.videoProgress[0].style.width = scale * 100 + '%';
-        vm.videoProgress[1].style.width = scale * 100 + '%';
-        this.style.left = scale * 100 + '%';
-        vm.videoContent.currentTime = scale * vm.videoContent.duration;
-        vm.videoTimes[0].innerHTML = formatTime(vm.videoContent.currentTime);
-      };
-      document.onmouseup = () => {
-        document.onmousemove = document.onmouseup = null;
-        vm.loadingFinish(false);
-      };
-      ev.preventDefault();
-    });
+    // 拖拽视频进度图标
+    this.dragProgress(
+      this.videoProgress[2],
+      (scale: number) => {
+        this.videoProgress[0].style.width = scale * 100 + '%';
+        this.videoProgress[1].style.width = scale * 100 + '%';
+        this.videoContent.currentTime = scale * this.videoContent.duration;
+        this.videoTimes[0].innerHTML = formatTime(
+          this.videoContent.currentTime,
+        );
+      },
+      () => {
+        this.loadingFinish(false);
+      },
+    );
 
     // 拖拽音量进度图标
-    this.videoVolProgress[1].addEventListener('mousedown', function (
-      ev: MouseEvent,
-    ) {
-      if (!vm.canplay) return;
-      let downX = ev.pageX;
-      let downL = this.offsetLeft;
-      document.onmousemove = (ev: MouseEvent) => {
-        let scale =
-          (ev.pageX - downX + downL + 8) / this.parentElement.offsetWidth;
-        scale < 0 && (scale = 0);
-        scale > 1 && (scale = 1);
-        vm.videoVolProgress[0].style.width = scale * 100 + '%';
-        this.style.left = scale * 100 + '%';
-        vm.videoContent.volume = scale;
-      };
-      document.onmouseup = () => {
-        document.onmousemove = document.onmouseup = null;
-      };
-      ev.preventDefault();
+    this.dragProgress(this.videoVolProgress[1], (scale: number) => {
+      this.videoVolProgress[0].style.width = scale * 100 + '%';
+      this.videoContent.volume = scale;
     });
-
-    // 正在播放中
-    function playing() {
-      if (!this.canplay) return;
-      let scale = this.videoContent.currentTime / this.videoContent.duration;
-      let scaleSuc =
-        this.videoContent.buffered.end(0) / this.videoContent.duration;
-      this.videoTimes[0].innerHTML = formatTime(this.videoContent.currentTime);
-      this.videoProgress[0].style.width = scale * 100 + '%';
-      this.videoProgress[1].style.width = scaleSuc * 100 + '%';
-      this.videoProgress[2].style.left = scale * 100 + '%';
-    }
   }
   // 是否加载完成，图标是否隐藏
   loadingFinish(bool: Boolean) {
@@ -211,6 +174,50 @@ class Video implements Icomponent {
       `.${styles['video-loading']}`,
     );
     videoLoading.style.display = bool ? 'none' : 'inline-block';
+  }
+  // 播放
+  playing() {
+    if (!this.canplay) return;
+    let scale = this.videoContent.currentTime / this.videoContent.duration;
+    let scaleSuc =
+      this.videoContent.buffered.end(0) / this.videoContent.duration;
+    this.videoTimes[0].innerHTML = formatTime(this.videoContent.currentTime);
+    this.videoProgress[0].style.width = scale * 100 + '%';
+    this.videoProgress[1].style.width = scaleSuc * 100 + '%';
+    this.videoProgress[2].style.left = scale * 100 + '%';
+  }
+  // 拖拽条
+  dragProgress(
+    elem: HTMLElement,
+    callback: (value: number) => void,
+    mouseupback?,
+  ) {
+    elem.addEventListener('mousedown', (ev: MouseEvent) => {
+      if (!this.canplay) return;
+      let downX = ev.pageX;
+      let downL = elem.offsetLeft;
+      document.onmousemove = (ev: MouseEvent) => {
+        let scale =
+          (ev.pageX - downX + downL + 8) / elem.parentElement.offsetWidth;
+        scale < 0 && (scale = 0);
+        scale > 1 && (scale = 1);
+        elem.style.left = scale * 100 + '%';
+        callback(scale);
+      };
+      document.onmouseup = () => {
+        document.onmousemove = document.onmouseup = null;
+        mouseupback();
+      };
+      ev.preventDefault();
+    });
+  }
+  // 播放暂停
+  playAndPause() {
+    if (this.videoContent.paused) {
+      this.videoContent.play();
+    } else {
+      this.videoContent.pause();
+    }
   }
 }
 
