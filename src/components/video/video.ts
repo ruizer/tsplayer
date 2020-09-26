@@ -1,14 +1,23 @@
 let styles = require('./video.css');
 
-import { clearInterval } from 'timers';
 import { IVideo, Icomponent } from './interface';
+import { formatTime } from '../../util/tool';
 
 function video(options: IVideo) {
   return new Video(options);
 }
 
 class Video implements Icomponent {
-  tempContainer;
+  tempContainer: HTMLElement;
+  videoContent: HTMLVideoElement;
+  videoControls: HTMLElement;
+  videoPlay: HTMLElement;
+  videoFull: HTMLElement;
+  videoProgress: NodeListOf<HTMLElement>;
+  videoVolProgress: NodeListOf<HTMLElement>;
+  videoTimes: NodeListOf<HTMLElement>;
+  timer: Number;
+  canplay: Boolean = false;
   constructor(private settings: IVideo) {
     this.settings = Object.assign(
       {
@@ -65,94 +74,95 @@ class Video implements Icomponent {
     }
   }
   handle() {
-    let videoContent: HTMLVideoElement = this.tempContainer.querySelector(
+    this.videoContent = this.tempContainer.querySelector(
       `.${styles['video-content']}`,
     );
-    let videoControls = this.tempContainer.querySelector(
+    this.videoControls = this.tempContainer.querySelector(
       `.${styles['video-controls']}`,
     );
-    let videoPlay = this.tempContainer.querySelector(
+    this.videoPlay = this.tempContainer.querySelector(
       `.${styles['video-controls']} i`,
     );
-    let videoFull = this.tempContainer.querySelector(
+    this.videoFull = this.tempContainer.querySelector(
       `.${styles['video-full']} i`,
     );
-    let videoProgress = this.tempContainer.querySelectorAll(
+    this.videoProgress = this.tempContainer.querySelectorAll(
       `.${styles['video-progress']} div`,
     );
-    let videoVolProgress = this.tempContainer.querySelectorAll(
+    this.videoVolProgress = this.tempContainer.querySelectorAll(
       `.${styles['video-volprogress']} div`,
     );
-    let videoTimes = this.tempContainer.querySelectorAll(
+    this.videoTimes = this.tempContainer.querySelectorAll(
       `.${styles['video-time']} span`,
     );
-    let timer;
-    let canplay = false;
+    this.canplay = false;
     const vm = this;
 
-    videoContent.volume = 0.5;
+    this.videoContent.volume = 0.5;
     if (this.settings.autoplay) {
-      timer = window.setInterval(playing, 1000);
-      videoContent.play();
+      this.timer = window.setInterval(playing, 1000);
+      this.videoContent.play();
     }
 
-    this.tempContainer.addEventListener('mouseenter', function () {
-      videoControls.style.bottom = 0;
+    this.tempContainer.addEventListener('mouseenter', () => {
+      this.videoControls.style.bottom = '0';
     });
-    this.tempContainer.addEventListener('mouseleave', function () {
-      videoControls.style.bottom = '-50px';
+    this.tempContainer.addEventListener('mouseleave', () => {
+      this.videoControls.style.bottom = '-50px';
     });
 
     // 视频开始加载事件
-    videoContent.addEventListener('loadstart', () => {
+    this.videoContent.addEventListener('loadstart', () => {
       this.loadingFinish(false);
     });
 
     // 视频是否加载完毕
-    videoContent.addEventListener('canplay', () => {
-      videoTimes[1].innerHTML = formatTime(videoContent.duration);
-      canplay = true;
+    this.videoContent.addEventListener('canplay', () => {
+      this.videoTimes[1].innerHTML = formatTime(this.videoContent.duration);
+      this.canplay = true;
       this.loadingFinish(true);
     });
     // 视频播放事件
-    videoContent.addEventListener('play', () => {
-      videoPlay.className = 'iconfont iconzantingtingzhi';
-      timer = window.setInterval(playing, 1000);
+    this.videoContent.addEventListener('play', () => {
+      this.videoPlay.className = 'iconfont iconzantingtingzhi';
+      this.timer = window.setInterval(playing, 1000);
     });
     // 视频暂停事件
-    videoContent.addEventListener('pause', () => {
-      videoPlay.className = 'iconfont iconbofang';
-      window.clearInterval(timer);
+    this.videoContent.addEventListener('pause', () => {
+      this.videoPlay.className = 'iconfont iconbofang';
+      window.clearInterval(Number(this.timer));
     });
 
     //播放暂停
-    videoPlay.addEventListener('click', () => {
-      if (videoContent.paused) {
-        videoContent.play();
+    this.videoPlay.addEventListener('click', () => {
+      if (this.videoContent.paused) {
+        this.videoContent.play();
       } else {
-        videoContent.pause();
+        this.videoContent.pause();
       }
     });
     // 全屏
-    videoFull.addEventListener('click', () => {
-      videoContent.requestFullscreen();
+    this.videoFull.addEventListener('click', () => {
+      this.videoContent.requestFullscreen();
     });
 
     // 拖拽进度图标
-    videoProgress[2].addEventListener('mousedown', function (ev: MouseEvent) {
-      if (!canplay) return;
+    this.videoProgress[2].addEventListener('mousedown', function (
+      ev: MouseEvent,
+    ) {
+      if (!vm.canplay) return;
       let downX = ev.pageX;
       let downL = this.offsetLeft;
       document.onmousemove = (ev: MouseEvent) => {
         let scale =
-          (ev.pageX - downX + downL + 8) / this.parentNode.offsetWidth;
+          (ev.pageX - downX + downL + 8) / this.parentElement.offsetWidth;
         scale < 0 && (scale = 0);
         scale > 1 && (scale = 1);
-        videoProgress[0].style.width = scale * 100 + '%';
-        videoProgress[1].style.width = scale * 100 + '%';
+        vm.videoProgress[0].style.width = scale * 100 + '%';
+        vm.videoProgress[1].style.width = scale * 100 + '%';
         this.style.left = scale * 100 + '%';
-        videoContent.currentTime = scale * videoContent.duration;
-        videoTimes[0].innerHTML = formatTime(videoContent.currentTime);
+        vm.videoContent.currentTime = scale * vm.videoContent.duration;
+        vm.videoTimes[0].innerHTML = formatTime(vm.videoContent.currentTime);
       };
       document.onmouseup = () => {
         document.onmousemove = document.onmouseup = null;
@@ -162,20 +172,20 @@ class Video implements Icomponent {
     });
 
     // 拖拽音量进度图标
-    videoVolProgress[1].addEventListener('mousedown', function (
+    this.videoVolProgress[1].addEventListener('mousedown', function (
       ev: MouseEvent,
     ) {
-      if (!canplay) return;
+      if (!vm.canplay) return;
       let downX = ev.pageX;
       let downL = this.offsetLeft;
       document.onmousemove = (ev: MouseEvent) => {
         let scale =
-          (ev.pageX - downX + downL + 8) / this.parentNode.offsetWidth;
+          (ev.pageX - downX + downL + 8) / this.parentElement.offsetWidth;
         scale < 0 && (scale = 0);
         scale > 1 && (scale = 1);
-        videoVolProgress[0].style.width = scale * 100 + '%';
+        vm.videoVolProgress[0].style.width = scale * 100 + '%';
         this.style.left = scale * 100 + '%';
-        videoContent.volume = scale;
+        vm.videoContent.volume = scale;
       };
       document.onmouseup = () => {
         document.onmousemove = document.onmouseup = null;
@@ -185,31 +195,19 @@ class Video implements Icomponent {
 
     // 正在播放中
     function playing() {
-      let scale = videoContent.currentTime / videoContent.duration;
-      let scaleSuc = videoContent.buffered.end(0) / videoContent.duration;
-      videoTimes[0].innerHTML = formatTime(videoContent.currentTime);
-      videoProgress[0].style.width = scale * 100 + '%';
-      videoProgress[1].style.width = scaleSuc * 100 + '%';
-      videoProgress[2].style.left = scale * 100 + '%';
-    }
-
-    function formatTime(num: number): string {
-      num = Math.round(num);
-      let min = Math.floor(num / 60);
-      let sec = num % 60;
-      return setZero(min) + ':' + setZero(sec);
-    }
-    function setZero(num: number): string {
-      if (num < 10) {
-        return '0' + num;
-      } else {
-        return '' + num;
-      }
+      if (!this.canplay) return;
+      let scale = this.videoContent.currentTime / this.videoContent.duration;
+      let scaleSuc =
+        this.videoContent.buffered.end(0) / this.videoContent.duration;
+      this.videoTimes[0].innerHTML = formatTime(this.videoContent.currentTime);
+      this.videoProgress[0].style.width = scale * 100 + '%';
+      this.videoProgress[1].style.width = scaleSuc * 100 + '%';
+      this.videoProgress[2].style.left = scale * 100 + '%';
     }
   }
   // 是否加载完成，图标是否隐藏
   loadingFinish(bool: Boolean) {
-    let videoLoading = this.tempContainer.querySelector(
+    let videoLoading: HTMLElement = this.tempContainer.querySelector(
       `.${styles['video-loading']}`,
     );
     videoLoading.style.display = bool ? 'none' : 'inline-block';
