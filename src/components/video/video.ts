@@ -41,8 +41,9 @@ class Video implements Icomponent {
     this.tempContainer.className = styles.video;
     this.tempContainer.style.width = this.settings.width;
     this.tempContainer.style.height = this.settings.height;
+    const poster = this.settings.poster ? `poster="${this.settings.poster}"`: ''
     this.tempContainer.innerHTML = `
-      <video class="${styles['video-content']}" src="${this.settings.url}"></video>
+      <video class="${styles['video-content']}" ${poster} src="${this.settings.url}"></video>
       <i class="iconfont iconxingzhuang ${styles['video-loading']}"></i>
       <div class="${styles['video-controls']}">
         <div class="${styles['video-progress']}">

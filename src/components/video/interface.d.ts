@@ -4,6 +4,7 @@ interface IVideo {
   width?: string;
   height?: string;
   autoplay?: boolean;
+  poster?: string
 }
 
 
