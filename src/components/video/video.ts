@@ -111,7 +111,7 @@ class Video implements Icomponent {
 
     this.videoContent.volume = 0.5;
     if (this.settings.autoplay) {
-      this.timer = window.setInterval(this.playing, 1000);
+      this.timer = window.setInterval(this.playing.bind(this), 1000);
       this.videoContent.play();
     }
 
@@ -136,7 +136,7 @@ class Video implements Icomponent {
     // 视频播放事件
     this.videoContent.addEventListener('play', () => {
       this.videoPlay.className = 'iconfont iconzantingtingzhi';
-      this.timer = window.setInterval(this.playing, 1000);
+      this.timer = window.setInterval(this.playing.bind(this), 1000);
     });
     // 视频暂停事件
     this.videoContent.addEventListener('pause', () => {
