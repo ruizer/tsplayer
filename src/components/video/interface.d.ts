@@ -4,9 +4,9 @@ interface IVideo {
   width?: string;
   height?: string;
   autoplay?: boolean;
-  poster?: string
+  poster?: string;
+  times?: number;
 }
-
 
 interface Icomponent {
   tempContainer: HTMLElement;

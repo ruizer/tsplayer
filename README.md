@@ -43,7 +43,7 @@ interface IVideo {
 - [x] 全屏播放
 - [x] loading 加载
 - [x] 封面
-- [ ] 倍数播放
+- [x] 倍数播放
 - [ ] 截屏
 
 ....
