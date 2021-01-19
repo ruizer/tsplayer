@@ -32,6 +32,7 @@ interface IVideo {
   height?: string;
   autoplay?: boolean;
   poster?: string;
+  times?: number;
 }
 ```
 
@@ -44,6 +45,6 @@ interface IVideo {
 - [x] loading 加载
 - [x] 封面
 - [x] 倍数播放
-- [ ] 截屏
+- ~~[ ] 截屏(canvas导出图片时会有跨域问题)~~
 
 ....
